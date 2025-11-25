@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
-import com.toedter.calendar.JDateChooser; // ¡Nuestro calendario favorito!
+import com.toedter.calendar.JDateChooser;
 
 public class RegistrarPaciente extends JDialog {
     // Datos de Usuario
@@ -15,12 +15,11 @@ public class RegistrarPaciente extends JDialog {
 
     public RegistrarPaciente() {
         setTitle("Registro de Nuevo Paciente");
-        setModal(true); // Bloquea la ventana anterior
-        setSize(500, 750); // Un poco alta porque son muchos datos
+        setModal(true);
+        setSize(500, 750);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // --- SECCIÓN 1: DATOS DE USUARIO ---
         JLabel lblTitulo1 = new JLabel("1. Datos Personales y de Cuenta");
         lblTitulo1.setFont(new Font("Arial", Font.BOLD, 14));
         lblTitulo1.setForeground(Color.BLUE);
@@ -32,9 +31,8 @@ public class RegistrarPaciente extends JDialog {
         agregarCampo(30, 130, "Apellido:", txtApellido = new JTextField());
         agregarCampo(30, 170, "Email:", txtEmail = new JTextField());
         agregarCampo(30, 210, "Teléfono:", txtTelefono = new JTextField());
-        agregarCampo(30, 250, "Contraseña:", txtPass = new JTextField()); // Visible para que el operador se la diga
+        agregarCampo(30, 250, "Contraseña:", txtPass = new JTextField());
 
-        // --- SECCIÓN 2: DATOS MÉDICOS ---
         JSeparator sep = new JSeparator();
         sep.setBounds(30, 290, 420, 10);
         add(sep);
@@ -45,7 +43,6 @@ public class RegistrarPaciente extends JDialog {
         lblTitulo2.setBounds(30, 310, 300, 20);
         add(lblTitulo2);
 
-        // Fecha Nacimiento
         JLabel lblNac = new JLabel("Fecha Nacimiento:");
         lblNac.setBounds(30, 340, 120, 25);
         add(lblNac);
@@ -54,11 +51,10 @@ public class RegistrarPaciente extends JDialog {
         dateNacimiento.setDateFormatString("yyyy-MM-dd");
         add(dateNacimiento);
 
-        // Sexo y Sangre
         JLabel lblSexo = new JLabel("Sexo:");
         lblSexo.setBounds(30, 380, 100, 25);
         add(lblSexo);
-        String[] sexos = {"M", "F", "O"}; // Según tu base de datos
+        String[] sexos = {"M", "F", "O"};
         cmbSexo = new JComboBox<>(sexos);
         cmbSexo.setBounds(150, 380, 80, 25);
         add(cmbSexo);
@@ -71,10 +67,8 @@ public class RegistrarPaciente extends JDialog {
         cmbSangre.setBounds(370, 380, 80, 25);
         add(cmbSangre);
 
-        // Dirección
         agregarCampo(30, 420, "Dirección:", txtDireccion = new JTextField());
 
-        // Peso y Altura
         JLabel lblPeso = new JLabel("Peso (kg):");
         lblPeso.setBounds(30, 460, 100, 25);
         add(lblPeso);
@@ -89,14 +83,12 @@ public class RegistrarPaciente extends JDialog {
         spinAltura.setBounds(370, 460, 80, 25);
         add(spinAltura);
 
-        // BOTÓN GUARDAR (Corregido)
         JButton btnGuardar = new JButton("REGISTRAR PACIENTE");
         btnGuardar.setBounds(100, 620, 280, 40);
-        btnGuardar.setBackground(new Color(50, 100, 200)); // Azul
+        btnGuardar.setBackground(new Color(50, 100, 200));
         btnGuardar.setForeground(Color.WHITE);
         btnGuardar.setFont(new Font("Arial", Font.BOLD, 14));
         
-        // ESTILO PLANO
         btnGuardar.setFocusPainted(false);
         btnGuardar.setBorderPainted(false);
         btnGuardar.setOpaque(true);
@@ -138,12 +130,10 @@ public class RegistrarPaciente extends JDialog {
                 pstUser.setString(6, txtPass.getText());
                 pstUser.executeUpdate();
 
-                // Recuperar el ID generado
                 ResultSet rsKey = pstUser.getGeneratedKeys();
                 int idUsuarioNuevo = 0;
                 if (rsKey.next()) idUsuarioNuevo = rsKey.getInt(1);
 
-                // 2. Insertar en PACIENTE
                 String sqlPac = "INSERT INTO PACIENTE (ID_USUARIO, SEXO, DIRECCION, FECHA_NACIMIENTO, GRUPO_SANGUINEO, PESO, ALTURA) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -152,7 +142,6 @@ public class RegistrarPaciente extends JDialog {
                 pstPac.setString(2, (String) cmbSexo.getSelectedItem());
                 pstPac.setString(3, txtDireccion.getText());
 
-                // Conversión de fecha
                 java.sql.Date fechaSql = new java.sql.Date(dateNacimiento.getDate().getTime());
                 pstPac.setDate(4, fechaSql);
 
@@ -161,7 +150,7 @@ public class RegistrarPaciente extends JDialog {
                 pstPac.setDouble(7, (double) spinAltura.getValue());
                 pstPac.executeUpdate();
 
-                con.commit(); // CONFIRMAR TODO
+                con.commit();
                 JOptionPane.showMessageDialog(this, "¡Paciente registrado exitosamente!");
                 dispose();
 

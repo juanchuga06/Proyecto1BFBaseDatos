@@ -18,10 +18,9 @@ public class RegistrarDoctor extends JDialog {
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // --- DATOS PERSONALES ---
         JLabel lblTitulo = new JLabel("Datos del Médico");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTitulo.setForeground(new Color(0, 100, 0)); // Verde Doctor
+        lblTitulo.setForeground(new Color(0, 100, 0));
         lblTitulo.setBounds(30, 20, 300, 20);
         add(lblTitulo);
 
@@ -36,13 +35,11 @@ public class RegistrarDoctor extends JDialog {
         sep.setBounds(30, 300, 420, 10);
         add(sep);
 
-        // --- DATOS PROFESIONALES ---
         JLabel lblEsp = new JLabel("Especialidad:");
         lblEsp.setBounds(30, 320, 100, 25);
         add(lblEsp);
 
-        // Lista de especialidades comunes
-        String[] especialidades = {"Medicina General", "Pediatría", "Cardiología", "Dermatología", 
+        String[] especialidades = {"Medicina General", "Pediatría", "Cardiología", "Dermatología",
                                    "Ginecología", "Traumatología", "Oftalmología", "Neurología"};
         cmbEspecialidad = new JComboBox<>(especialidades);
         cmbEspecialidad.setEditable(true); // ¡Permitimos escribir una nueva si no está en la lista!
@@ -59,12 +56,10 @@ public class RegistrarDoctor extends JDialog {
         dateContrato.setBounds(150, 360, 150, 25);
         add(dateContrato);
 
-        // BOTÓN REGISTRAR
         JButton btnGuardar = new JButton("REGISTRAR DOCTOR 👨‍⚕️");
         btnGuardar.setBounds(100, 430, 280, 40);
-        btnGuardar.setBackground(new Color(0, 100, 0)); // Verde
+        btnGuardar.setBackground(new Color(0, 100, 0));
         btnGuardar.setForeground(Color.WHITE);
-        // Estilo plano
         btnGuardar.setFocusPainted(false);
         btnGuardar.setBorderPainted(false);
         btnGuardar.setOpaque(true);
@@ -108,7 +103,6 @@ public class RegistrarDoctor extends JDialog {
                 int idUsuario = 0;
                 if (rs.next()) idUsuario = rs.getInt(1);
 
-                // 2. Insertar DOCTOR
                 String sqlDoc = "INSERT INTO DOCTOR (ID_USUARIO, ESPECIALIDAD, FECHA_CONTRATO) VALUES (?, ?, ?)";
                 PreparedStatement pstDoc = con.prepareStatement(sqlDoc);
                 pstDoc.setInt(1, idUsuario);

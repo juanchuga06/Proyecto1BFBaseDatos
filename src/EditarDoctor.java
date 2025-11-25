@@ -56,7 +56,7 @@ public class EditarDoctor extends JDialog {
 
         JButton btnGuardar = new JButton("GUARDAR CAMBIOS 💾");
         btnGuardar.setBounds(100, 400, 280, 40);
-        btnGuardar.setBackground(new Color(255, 140, 0)); // Naranja
+        btnGuardar.setBackground(new Color(255, 140, 0));
         btnGuardar.setForeground(Color.WHITE);
         btnGuardar.setFocusPainted(false);
         btnGuardar.setBorderPainted(false);
@@ -116,7 +116,6 @@ public class EditarDoctor extends JDialog {
                 pstUser.setInt(5, this.idUsuario);
                 pstUser.executeUpdate();
 
-                // 2. Update DOCTOR
                 String sqlDoc = "UPDATE DOCTOR SET ESPECIALIDAD=?, FECHA_CONTRATO=? WHERE ID_DOCTOR=?";
                 PreparedStatement pstDoc = con.prepareStatement(sqlDoc);
                 pstDoc.setString(1, (String) cmbEspecialidad.getSelectedItem());

@@ -3,13 +3,12 @@ import java.awt.*;
 import java.sql.*;
 import java.util.Calendar;
 import java.util.Date;
-// IMPORTANTE: Importamos la nueva librería
 import com.toedter.calendar.JDateChooser;
 
 public class AgendarCita extends JDialog {
     private int idPaciente;
     private JComboBox<ItemDoctor> cmbDoctores;
-    private JDateChooser dateChooser; // CAMBIO: Usamos el selector profesional
+    private JDateChooser dateChooser;
     private JComboBox<String> cmbHora;
     private JTextArea txtMotivo;
 
@@ -20,11 +19,9 @@ public class AgendarCita extends JDialog {
 
         setTitle("Agendar Nueva Cita");
         setSize(450, 550);
-        //setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // 1. SELECCIÓN DE DOCTOR
         JLabel lblDoc = new JLabel("Seleccione Doctor:");
         lblDoc.setBounds(30, 30, 200, 20);
         add(lblDoc);
@@ -34,29 +31,24 @@ public class AgendarCita extends JDialog {
         add(cmbDoctores);
         cargarDoctores();
 
-        // 2. SELECCIÓN DE FECHA (¡Ahora con Calendario!)
         JLabel lblFecha = new JLabel("Fecha de la cita (Máx 7 días):");
         lblFecha.setBounds(30, 100, 200, 20);
         add(lblFecha);
 
         dateChooser = new JDateChooser();
         dateChooser.setBounds(30, 125, 150, 30);
-        dateChooser.setDateFormatString("yyyy-MM-dd"); // Formato visual
+        dateChooser.setDateFormatString("yyyy-MM-dd");
 
-        // --- RESTRICCIONES VISUALES ---
-        // 1. No permitir fechas pasadas (Mínimo = Hoy)
         Date hoy = new Date();
         dateChooser.setMinSelectableDate(hoy);
-        dateChooser.setDate(hoy); // Por defecto seleccionamos hoy
+        dateChooser.setDate(hoy);
 
-        // 2. No permitir más de 7 días en el futuro
         Calendar limite = Calendar.getInstance();
         limite.add(Calendar.DAY_OF_YEAR, 7);
         dateChooser.setMaxSelectableDate(limite.getTime());
 
         add(dateChooser);
 
-        // 3. SELECCIÓN DE HORA
         JLabel lblHora = new JLabel("Horario Disponible:");
         lblHora.setBounds(200, 100, 150, 20);
         add(lblHora);
@@ -66,7 +58,6 @@ public class AgendarCita extends JDialog {
         add(cmbHora);
         cargarHorarios();
 
-        // 4. MOTIVO
         JLabel lblMotivo = new JLabel("Motivo de consulta:");
         lblMotivo.setBounds(30, 170, 200, 20);
         add(lblMotivo);
@@ -77,13 +68,11 @@ public class AgendarCita extends JDialog {
         scrollMotivo.setBounds(30, 195, 350, 100);
         add(scrollMotivo);
 
-        // 5. BOTÓN GUARDAR (Corregido)
         JButton btnGuardar = new JButton("Agendar Cita");
         btnGuardar.setBounds(120, 330, 180, 40);
-        btnGuardar.setBackground(new Color(0, 100, 0)); // Verde
+        btnGuardar.setBackground(new Color(0, 100, 0));
         btnGuardar.setForeground(Color.WHITE);
         
-        // ESTILO PLANO
         btnGuardar.setFocusPainted(false);
         btnGuardar.setBorderPainted(false);
         btnGuardar.setOpaque(true);
@@ -120,7 +109,6 @@ public class AgendarCita extends JDialog {
     }
 
     private void intentarGuardar() {
-        // CAMBIO: Obtenemos la fecha directo del componente nuevo
         Date fechaSeleccionada = dateChooser.getDate();
 
         if (fechaSeleccionada == null) {
@@ -131,11 +119,9 @@ public class AgendarCita extends JDialog {
         String horaTexto = (String) cmbHora.getSelectedItem();
         ItemDoctor doctor = (ItemDoctor) cmbDoctores.getSelectedItem();
 
-        // Convertimos a SQL
         java.sql.Time horaSql = java.sql.Time.valueOf(horaTexto + ":00");
         java.sql.Date fechaSql = new java.sql.Date(fechaSeleccionada.getTime());
 
-        // Validación de disponibilidad (¡Esto sigue siendo vital!)
         if (elDoctorEstaOcupado(doctor.getId(), fechaSql, horaSql)) {
             JOptionPane.showMessageDialog(this,
                     "El doctor " + doctor + " ya tiene una cita a esa hora.\nPor favor selecciona otro horario.",

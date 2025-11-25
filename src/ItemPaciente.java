@@ -1,14 +1,14 @@
-public class ItemDoctor {
+public class ItemPaciente {
     private int id;
     private String nombre;
 
-    public ItemDoctor(int id, String nombre) {
+    public ItemPaciente(int id, String nombre) {
         this.id = id;
         this.nombre = nombre;
     }
 
-    public int getId() {
-        return id;
+    public int getId() { 
+        return id; 
     }
 
     @Override

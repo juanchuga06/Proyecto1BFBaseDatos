@@ -5,13 +5,12 @@ import java.sql.*;
 
 public class MenuDoctor extends JFrame {
     private int idUsuario;
-    private int idDoctor; // El ID profesional
+    private int idDoctor;
     private JTable tablaCitas;
     private DefaultTableModel modelo;
 
     public MenuDoctor(int idUsuario) {
         this.idUsuario = idUsuario;
-        // 1. Buscamos quién es este doctor
         this.idDoctor = obtenerIdDoctor(idUsuario);
 
         // Configuración de la ventana
@@ -32,7 +31,6 @@ public class MenuDoctor extends JFrame {
         btnLogout.setBackground(new Color(255, 80, 80));
         btnLogout.setForeground(Color.WHITE);
 
-        // Estilo Moderno
         btnLogout.setFocusPainted(false);
         btnLogout.setBorderPainted(false);
         btnLogout.setOpaque(true);
@@ -43,38 +41,34 @@ public class MenuDoctor extends JFrame {
             new Login().setVisible(true);
         });
 
-        // --- TABLA DE CITAS ---
-        // Nota: Mostramos el PACIENTE en vez del Doctor
         String[] columnas = {"ID", "Fecha", "Hora", "Paciente", "Motivo", "Estado"};
         
-        // Creamos el modelo pero bloqueando la edición
         modelo = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // ¡Aquí está la magia! Retorna siempre falso.
+                return false;
             }
         };
         tablaCitas = new JTable(modelo);
 
         // --- MEJORAS VISUALES DE LA TABLA ---
-        tablaCitas.setRowHeight(30); // Más altura a las filas (¡Se verá mucho mejor!)
-        tablaCitas.setFont(new Font("Arial", Font.PLAIN, 14)); // Letra un poco más grande
-        tablaCitas.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14)); // Encabezados en negrita
-        tablaCitas.getTableHeader().setBackground(new Color(230, 230, 230)); // Fondo gris suave para encabezados
+        tablaCitas.setRowHeight(30);
+        tablaCitas.setFont(new Font("Arial", Font.PLAIN, 14));
+        tablaCitas.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        tablaCitas.getTableHeader().setBackground(new Color(230, 230, 230));
         // -----------------------------------
 
         JScrollPane scrollPane = new JScrollPane(tablaCitas);
         scrollPane.setBounds(30, 70, 720, 300);
         add(scrollPane);
 
-        // Botón para atender (Verde sólido)
         JButton btnAtender = new JButton("Atender Cita / Ver Detalles");
         btnAtender.setBounds(30, 400, 200, 30);
-        btnAtender.setBackground(new Color(0, 100, 0)); // Verde
+        btnAtender.setBackground(new Color(0, 100, 0));
         btnAtender.setForeground(Color.WHITE);
         btnAtender.setFocusPainted(false);
-        btnAtender.setBorderPainted(false); // Quita el borde 3D de Windows
-        btnAtender.setOpaque(true); // Obliga a pintar el fondo
+        btnAtender.setBorderPainted(false);
+        btnAtender.setOpaque(true);
         add(btnAtender);
 
         btnAtender.addActionListener(e -> {
@@ -84,24 +78,19 @@ public class MenuDoctor extends JFrame {
                 return;
             }
 
-            // Obtenemos datos de la fila seleccionada
             int idCita = (int) modelo.getValueAt(fila, 0);
             String estado = (String) modelo.getValueAt(fila, 5);
 
-            // 2. VALIDACIÓN CORREGIDA: Solo pasa si dice "Programada"
             if (!"Programada".equals(estado)) {
                 JOptionPane.showMessageDialog(this, "Solo se pueden atender citas Programadas (Pendientes).");
                 return;
             }
 
-            // Abrimos la ventana de atención (MODAL)
             new AtenderCita(idCita).setVisible(true);
 
-            // Al volver, recargamos la tabla para ver que ya cambió a 'A'
             cargarAgenda();
         });
 
-        // Cargar las citas al iniciar
         cargarAgenda();
     }
 
@@ -126,7 +115,6 @@ public class MenuDoctor extends JFrame {
         modelo.setRowCount(0);
         try {
             Connection con = Conexion.getConexion();
-            // SQL Normal (trae todo)
             String sql = "SELECT C.ID_CITA, C.FECHA_CITA, C.HORA_INICIO, " +
                     "CONCAT(U.NOMBRE, ' ', U.APELLIDO) AS NOMBRE_PACIENTE, " +
                     "C.MOTIVO_CONSULTA, C.ESTADO_CITA " +
@@ -140,7 +128,6 @@ public class MenuDoctor extends JFrame {
 
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
-                // 1. TRADUCCIÓN VISUAL
                 String estadoLetra = rs.getString("ESTADO_CITA");
                 String estadoTexto = estadoLetra;
                 
@@ -156,7 +143,7 @@ public class MenuDoctor extends JFrame {
                         rs.getTime("HORA_INICIO"),
                         rs.getString("NOMBRE_PACIENTE"),
                         rs.getString("MOTIVO_CONSULTA"),
-                        estadoTexto // <--- Palabra completa
+                        estadoTexto
                 };
                 modelo.addRow(fila);
             }

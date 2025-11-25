@@ -24,7 +24,6 @@ public class EditarPaciente extends JDialog {
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // --- SECCIÓN 1: DATOS PERSONALES (Tabla USUARIO) ---
         JLabel lblTitulo1 = new JLabel("1. Datos Personales (Usuario)");
         lblTitulo1.setFont(new Font("Arial", Font.BOLD, 14));
         lblTitulo1.setForeground(Color.BLUE);
@@ -39,7 +38,6 @@ public class EditarPaciente extends JDialog {
         agregarCampo(30, 170, "Email:", txtEmail = new JTextField());
         agregarCampo(30, 210, "Teléfono:", txtTelefono = new JTextField());
 
-        // --- SECCIÓN 2: FICHA MÉDICA (Tabla PACIENTE) ---
         JSeparator sep = new JSeparator();
         sep.setBounds(30, 250, 420, 10);
         add(sep);
@@ -163,7 +161,6 @@ public class EditarPaciente extends JDialog {
                 pstUser.setInt(5, this.idUsuario);
                 pstUser.executeUpdate();
 
-                // 2. Actualizar PACIENTE
                 String sqlPac = "UPDATE PACIENTE SET SEXO=?, DIRECCION=?, FECHA_NACIMIENTO=?, GRUPO_SANGUINEO=?, PESO=?, ALTURA=? WHERE ID_PACIENTE=?";
                 PreparedStatement pstPac = con.prepareStatement(sqlPac);
                 pstPac.setString(1, (String) cmbSexo.getSelectedItem());

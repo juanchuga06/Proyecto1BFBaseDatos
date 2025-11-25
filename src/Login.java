@@ -2,7 +2,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-// 1. IMPORTAR LAS CLASES SQL (¡Muy importante!)
 import java.sql.*;
 
 public class Login extends JFrame {
@@ -53,9 +52,7 @@ public class Login extends JFrame {
         String email = txtEmail.getText();
         String password = new String(txtPassword.getPassword());
 
-        // Usamos try-catch porque conectar a BD puede fallar
         try {
-            // 2. CORREGIDO: Tipo Connection y método getConexion()
             Connection conexion = Conexion.getConexion();
 
             String sql = "SELECT * FROM USUARIO WHERE EMAIL = ? AND CONTRASENA = ?";
@@ -69,10 +66,8 @@ public class Login extends JFrame {
 
             if (rs.next()) {
                 String rol = rs.getString("ROL");
-                // 3. RECUPERAR EL ID (¡Esto faltaba!)
                 int idUsuario = rs.getInt("ID_USUARIO");
 
-                // 4. CORREGIDO: Comillas dobles para Strings ("P")
                 switch (rol) {
                     case "P": // Paciente
                         new MenuPaciente(idUsuario).setVisible(true);
@@ -87,7 +82,7 @@ public class Login extends JFrame {
                         this.dispose();
                         break;
                     default:
-                        JOptionPane.showMessageDialog(null, "Rol no encontrado");  //Creo que esto nunca se llegará a ejecutar y por tanto puedo borrarlo
+                        JOptionPane.showMessageDialog(null, "Rol no encontrado");
                         break;
                 }
             } else {

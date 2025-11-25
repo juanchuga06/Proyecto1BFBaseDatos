@@ -13,7 +13,6 @@ public class ItemMedicamento {
 
     @Override
     public String toString() {
-        // Esto mostrará: "Paracetamol - Tableta 500mg"
         return nombre + " - " + presentacion;
     }
 }

@@ -2,12 +2,12 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
-import java.util.ArrayList; // Para guardar la lista temporal de medicinas
+import java.util.ArrayList;
 
 public class AtenderCita extends JDialog {
     private int idCita;
-    private JTextArea txtObservaciones; // Diagnóstico
-    private JTextArea txtTratamiento;   // Indicaciones generales
+    private JTextArea txtObservaciones;
+    private JTextArea txtTratamiento;
     private JSpinner spinDiasTratamiento;
 
     // Componentes de la Receta
@@ -18,20 +18,17 @@ public class AtenderCita extends JDialog {
     private JTable tablaReceta;
     private DefaultTableModel modeloReceta;
 
-    // Lista oculta para guardar los IDs de las medicinas agregadas
-    // Guardamos objetos con: idMedicina, dosis, frecuencia, duracion
     private ArrayList<Object[]> listaMedicinasGuardar = new ArrayList<>();
 
     public AtenderCita(int idCita) {
         this.idCita = idCita;
 
         setTitle("Atención Médica - Cita #" + idCita);
-        setModal(true); // Bloquea la ventana anterior
+        setModal(true);
         setSize(900, 600);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // --- SECCIÓN 1: DIAGNÓSTICO Y OBSERVACIONES ---
         JLabel lblObs = new JLabel("1. Diagnóstico / Observaciones de la Cita:");
         lblObs.setFont(new Font("Arial", Font.BOLD, 14));
         lblObs.setBounds(30, 20, 350, 20);
@@ -43,7 +40,6 @@ public class AtenderCita extends JDialog {
         scrollObs.setBounds(30, 45, 400, 80);
         add(scrollObs);
 
-        // --- SECCIÓN 2: TRATAMIENTO GENERAL ---
         JLabel lblTrat = new JLabel("2. Descripción del Tratamiento (Indicaciones):");
         lblTrat.setFont(new Font("Arial", Font.BOLD, 14));
         lblTrat.setBounds(30, 140, 350, 20);
@@ -62,9 +58,8 @@ public class AtenderCita extends JDialog {
         spinDiasTratamiento.setBounds(130, 255, 60, 25);
         add(spinDiasTratamiento);
 
-        // --- SECCIÓN 3: RECETA DE MEDICAMENTOS ---
         JSeparator sep = new JSeparator(SwingConstants.VERTICAL);
-        sep.setBounds(450, 20, 10, 440); // Más corta para no tocar el botón
+        sep.setBounds(450, 20, 10, 440);
         add(sep);
 
         JLabel lblReceta = new JLabel("3. Receta / Medicamentos:");
@@ -72,7 +67,6 @@ public class AtenderCita extends JDialog {
         lblReceta.setBounds(470, 20, 300, 20);
         add(lblReceta);
 
-        // Formulario pequeño para agregar medicinas
         cmbMedicinas = new JComboBox<>();
         cmbMedicinas.setBounds(470, 50, 380, 30);
         add(cmbMedicinas);
@@ -93,14 +87,12 @@ public class AtenderCita extends JDialog {
         add(btnAgregarMed);
         btnAgregarMed.addActionListener(e -> agregarMedicinaALaTabla());
 
-        // Tabla visual de la receta
         String[] cols = {"Medicamento", "Dosis", "Frecuencia", "Días"};
         
-        // Creamos el modelo pero bloqueando la edición
         modeloReceta = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // ¡Aquí está la magia! Retorna siempre falso.
+                return false;
             }
         };
         tablaReceta = new JTable(modeloReceta);
@@ -108,23 +100,20 @@ public class AtenderCita extends JDialog {
         scrollTabla.setBounds(470, 170, 380, 250);
         add(scrollTabla);
 
-        // --- BOTÓN FINAL ---
         JButton btnFinalizar = new JButton("FINALIZAR CONSULTA");
         btnFinalizar.setBounds(300, 480, 300, 50);
-        btnFinalizar.setBackground(new Color(0, 100, 0)); // Verde oscuro
+        btnFinalizar.setBackground(new Color(0, 100, 0));
         btnFinalizar.setForeground(Color.WHITE);
         btnFinalizar.setFont(new Font("Arial", Font.BOLD, 16));
         
-        // ESTILO PLANO (FLAT) PARA QUE SE VEA EL COLOR
         btnFinalizar.setFocusPainted(false);
         btnFinalizar.setBorderPainted(false);
-        btnFinalizar.setOpaque(true); // Obligatorio para que se pinte el verde
+        btnFinalizar.setOpaque(true);
         add(btnFinalizar);
 
         btnFinalizar.addActionListener(e -> guardarTodo());
     }
 
-    // Método auxiliar para ahorrar código de interfaz
     private void agregarCampo(int x, int y, String titulo, Component comp) {
         JLabel lbl = new JLabel(titulo);
         lbl.setBounds(x, y, 80, 25);
@@ -159,13 +148,10 @@ public class AtenderCita extends JDialog {
             return;
         }
 
-        // 1. Agregar a la tabla VISUAL
         modeloReceta.addRow(new Object[]{med.toString(), dosis, frec, dias});
 
-        // 2. Guardar en la lista LÓGICA (para la base de datos después)
         listaMedicinasGuardar.add(new Object[]{med.getId(), dosis, frec, dias});
 
-        // Limpiar campos
         txtDosis.setText("");
         txtFrecuencia.setText("");
     }
@@ -178,18 +164,15 @@ public class AtenderCita extends JDialog {
 
         try {
             Connection con = Conexion.getConexion();
-            con.setAutoCommit(false); // ¡MODO EXPERTO! Inicia una transacción (todo o nada)
+            con.setAutoCommit(false);
 
             try {
-                // PASO 1: Actualizar la CITA (Estado 'A' y Observaciones)
                 String sqlCita = "UPDATE CITA SET ESTADO_CITA = 'A', OBSERVACIONES = ? WHERE ID_CITA = ?";
                 PreparedStatement pstCita = con.prepareStatement(sqlCita);
                 pstCita.setString(1, txtObservaciones.getText());
                 pstCita.setInt(2, idCita);
                 pstCita.executeUpdate();
 
-                // PASO 2: Insertar el TRATAMIENTO
-                // Necesitamos recuperar el ID generado automáticamente (RETURN_GENERATED_KEYS)
                 String sqlTrat = "INSERT INTO TRATAMIENTO (ID_CITA, DESCRIPCION, FECHA_INICIO_TRATAMIENTO, DURACION_DIAS) VALUES (?, ?, CURDATE(), ?)";
                 PreparedStatement pstTrat = con.prepareStatement(sqlTrat, Statement.RETURN_GENERATED_KEYS);
                 pstTrat.setInt(1, idCita);
@@ -197,36 +180,34 @@ public class AtenderCita extends JDialog {
                 pstTrat.setInt(3, (int) spinDiasTratamiento.getValue());
                 pstTrat.executeUpdate();
 
-                // Recuperar el ID del tratamiento recién creado
                 ResultSet rsKeys = pstTrat.getGeneratedKeys();
                 int idTratamiento = 0;
                 if (rsKeys.next()) {
                     idTratamiento = rsKeys.getInt(1);
                 }
 
-                // PASO 3: Insertar las MEDICINAS una por una
                 String sqlMed = "INSERT INTO TRATAMIENTO_MEDICAMENTO (ID_TRATAMIENTO, ID_MEDICAMENTO, DOSIS, FRECUENCIA, DURACION) VALUES (?, ?, ?, ?, ?)";
                 PreparedStatement pstMed = con.prepareStatement(sqlMed);
 
                 for (Object[] fila : listaMedicinasGuardar) {
                     pstMed.setInt(1, idTratamiento);
-                    pstMed.setInt(2, (int) fila[0]); // ID Medicamento
-                    pstMed.setString(3, (String) fila[1]); // Dosis
-                    pstMed.setString(4, (String) fila[2]); // Frecuencia
-                    pstMed.setInt(5, (int) fila[3]); // Duración
+                    pstMed.setInt(2, (int) fila[0]);
+                    pstMed.setString(3, (String) fila[1]);
+                    pstMed.setString(4, (String) fila[2]);
+                    pstMed.setInt(5, (int) fila[3]);
                     pstMed.executeUpdate();
                 }
 
-                con.commit(); // ¡CONFIRMAR CAMBIOS! 💾
+                con.commit();
                 JOptionPane.showMessageDialog(this, "¡Consulta finalizada exitosamente!");
                 dispose();
 
             } catch (SQLException e) {
-                con.rollback(); // Si algo falla, deshacer todo (seguridad total)
+                con.rollback();
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error grave: " + e.getMessage());
             } finally {
-                con.setAutoCommit(true); // Volver a la normalidad
+                con.setAutoCommit(true);
             }
 
         } catch (SQLException e) {
