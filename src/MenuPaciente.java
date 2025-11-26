@@ -20,11 +20,21 @@ public class MenuPaciente extends JFrame {
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // Título
+        // Título Principal
         JLabel lblTitulo = new JLabel("Mis Citas Médicas");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
         lblTitulo.setBounds(30, 20, 300, 30);
         add(lblTitulo);
+        
+        // --- NUEVO: MOSTRAR FECHA DE INICIO DE HISTORIA ---
+        String fechaInicio = obtenerFechaInicioHistoria(this.idPaciente);
+        
+        JLabel lblHistoria = new JLabel("Historia Clínica abierta desde: " + fechaInicio);
+        lblHistoria.setFont(new Font("Arial", Font.ITALIC, 12));
+        lblHistoria.setForeground(Color.GRAY);
+        lblHistoria.setBounds(30, 45, 400, 20);
+        add(lblHistoria);
+        // --------------------------------------------------
 
         // --- BOTÓN CERRAR SESIÓN (Arriba a la derecha) ---
         JButton btnLogout = new JButton("Cerrar Sesión 🚪");
@@ -127,6 +137,27 @@ public class MenuPaciente extends JFrame {
             e.printStackTrace();
         }
         return idEncontrado;
+    }
+    
+    private String obtenerFechaInicioHistoria(int idPaciente) {
+        String fecha = "Desconocida";
+        try {
+            Connection con = Conexion.getConexion();
+            String sql = "SELECT FECHA_INICIO_HISTORIA FROM HISTORIA_CLINICA WHERE ID_PACIENTE = ?";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, idPaciente);
+            ResultSet rs = pst.executeQuery();
+            
+            if (rs.next()) {
+                Date d = rs.getDate("FECHA_INICIO_HISTORIA");
+                if (d != null) {
+                    fecha = d.toString();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return fecha;
     }
 
     private void cargarCitas() {

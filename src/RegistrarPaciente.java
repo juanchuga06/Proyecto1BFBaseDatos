@@ -134,10 +134,11 @@ public class RegistrarPaciente extends JDialog {
                 int idUsuarioNuevo = 0;
                 if (rsKey.next()) idUsuarioNuevo = rsKey.getInt(1);
 
+                // 2. Insertar en PACIENTE
                 String sqlPac = "INSERT INTO PACIENTE (ID_USUARIO, SEXO, DIRECCION, FECHA_NACIMIENTO, GRUPO_SANGUINEO, PESO, ALTURA) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-                PreparedStatement pstPac = con.prepareStatement(sqlPac);
+                PreparedStatement pstPac = con.prepareStatement(sqlPac, Statement.RETURN_GENERATED_KEYS);
                 pstPac.setInt(1, idUsuarioNuevo);
                 pstPac.setString(2, (String) cmbSexo.getSelectedItem());
                 pstPac.setString(3, txtDireccion.getText());
@@ -150,8 +151,18 @@ public class RegistrarPaciente extends JDialog {
                 pstPac.setDouble(7, (double) spinAltura.getValue());
                 pstPac.executeUpdate();
 
+                ResultSet rsKeyPac = pstPac.getGeneratedKeys();
+                int idPacienteNuevo = 0;
+                if (rsKeyPac.next()) idPacienteNuevo = rsKeyPac.getInt(1);
+
+                // 3. Crear HISTORIA CLÍNICA automáticamente
+                String sqlHist = "INSERT INTO HISTORIA_CLINICA (ID_PACIENTE, FECHA_INICIO_HISTORIA) VALUES (?, CURDATE())";
+                PreparedStatement pstHist = con.prepareStatement(sqlHist);
+                pstHist.setInt(1, idPacienteNuevo);
+                pstHist.executeUpdate();
+
                 con.commit();
-                JOptionPane.showMessageDialog(this, "¡Paciente registrado exitosamente!");
+                JOptionPane.showMessageDialog(this, "¡Paciente registrado exitosamente!\n(Historia clínica creada)");
                 dispose();
 
             } catch (SQLException e) {
