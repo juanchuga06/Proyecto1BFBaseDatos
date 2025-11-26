@@ -51,7 +51,6 @@ public class MenuDoctor extends JFrame {
         };
         tablaCitas = new JTable(modelo);
 
-        // --- MEJORAS VISUALES DE LA TABLA ---
         tablaCitas.setRowHeight(30);
         tablaCitas.setFont(new Font("Arial", Font.PLAIN, 14));
         tablaCitas.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));

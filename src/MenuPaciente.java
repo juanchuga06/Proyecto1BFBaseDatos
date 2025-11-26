@@ -13,20 +13,17 @@ public class MenuPaciente extends JFrame {
         this.idUsuario = idUsuario;
         this.idPaciente = obtenerIdPaciente(idUsuario);
 
-        // Configuración de la ventana
         setTitle("Menú del Paciente - Usuario: " + idUsuario + " | Paciente: " + idPaciente);
         setSize(800, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // Título Principal
         JLabel lblTitulo = new JLabel("Mis Citas Médicas");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
         lblTitulo.setBounds(30, 20, 300, 30);
         add(lblTitulo);
         
-        // --- NUEVO: MOSTRAR FECHA DE INICIO DE HISTORIA ---
         String fechaInicio = obtenerFechaInicioHistoria(this.idPaciente);
         
         JLabel lblHistoria = new JLabel("Historia Clínica abierta desde: " + fechaInicio);
@@ -36,7 +33,6 @@ public class MenuPaciente extends JFrame {
         add(lblHistoria);
         // --------------------------------------------------
 
-        // --- BOTÓN CERRAR SESIÓN (Arriba a la derecha) ---
         JButton btnLogout = new JButton("Cerrar Sesión 🚪");
         btnLogout.setBounds(600, 20, 150, 30);
         btnLogout.setBackground(new Color(255, 80, 80));

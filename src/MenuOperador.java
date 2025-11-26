@@ -8,7 +8,7 @@ public class MenuOperador extends JFrame {
     private JLabel lblNombrePaciente;
     private JTable tablaCitas;
     private DefaultTableModel modelo;
-    private JButton btnEditarPac, btnEliminarPac; // Botones de gestión
+    private JButton btnEditarPac, btnEliminarPac;
 
     private int idPacienteActual = -1;
     private int idDoctorActual = -1;
@@ -23,13 +23,11 @@ public class MenuOperador extends JFrame {
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // --- ZONA DE BÚSQUEDA ---
         JLabel lblTitulo = new JLabel("Gestión de Usuarios y Citas");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
         lblTitulo.setBounds(30, 20, 350, 30);
         add(lblTitulo);
 
-        // --- BOTÓN CERRAR SESIÓN ---
         JButton btnLogout = new JButton("Cerrar Sesión 🚪");
         btnLogout.setBounds(700, 20, 150, 30);
         btnLogout.setBackground(new Color(255, 80, 80));
@@ -96,12 +94,10 @@ public class MenuOperador extends JFrame {
             }
         });
 
-        // --- SEPARADOR ---
         JSeparator sep = new JSeparator();
         sep.setBounds(30, 120, 820, 10);
         add(sep);
 
-        // --- INFO DEL PACIENTE ENCONTRADO ---
         lblNombrePaciente = new JLabel("Paciente: (Ninguno seleccionado)");
         lblNombrePaciente.setFont(new Font("Arial", Font.BOLD, 18));
         lblNombrePaciente.setForeground(new Color(100, 100, 100)); // Gris al inicio
@@ -139,7 +135,6 @@ public class MenuOperador extends JFrame {
 
         btnEliminarPac.addActionListener(e -> eliminarUsuario());
 
-        // --- TABLA DE CITAS ---
         String[] columnas = {"ID", "Fecha", "Hora", "Doctor", "Motivo", "Estado"};
         
         modelo = new DefaultTableModel(columnas, 0) {
@@ -150,7 +145,6 @@ public class MenuOperador extends JFrame {
         };
         tablaCitas = new JTable(modelo);
 
-        // --- MEJORAS VISUALES DE LA TABLA ---
         tablaCitas.setRowHeight(30);
         tablaCitas.setFont(new Font("Arial", Font.PLAIN, 14));
         tablaCitas.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
@@ -184,7 +178,6 @@ public class MenuOperador extends JFrame {
             }
         });
 
-        // --- BOTONES DE ACCIÓN (Agendar / Editar / Cancelar) ---
         JButton btnAgendar = new JButton("Agendar Cita para este Paciente");
         btnAgendar.setBounds(30, 450, 250, 40);
         btnAgendar.setBackground(new Color(0, 100, 0));
@@ -194,7 +187,6 @@ public class MenuOperador extends JFrame {
         btnAgendar.setOpaque(true);
         add(btnAgendar);
 
-        // --- BOTÓN EDITAR ---
         JButton btnEditar = new JButton("Editar Cita ✏️");
         btnEditar.setBounds(300, 450, 200, 40);
         btnEditar.setBackground(new Color(255, 140, 0));

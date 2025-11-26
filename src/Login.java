@@ -10,14 +10,12 @@ public class Login extends JFrame {
     private JButton btnIngresar;
 
     public Login() {
-        // Configuración de la ventana
         setTitle("Sistema de Citas Médicas - Login");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
         setLocationRelativeTo(null);
 
-        // Componentes
         JLabel lblEmail = new JLabel("Email:");
         lblEmail.setBounds(50, 50, 80, 25);
         add(lblEmail);
@@ -34,12 +32,10 @@ public class Login extends JFrame {
         txtPassword.setBounds(150, 100, 200, 25);
         add(txtPassword);
 
-        // Botón
         btnIngresar = new JButton("Ingresar");
         btnIngresar.setBounds(150, 160, 100, 30);
         add(btnIngresar);
 
-        // Acción del botón
         btnIngresar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

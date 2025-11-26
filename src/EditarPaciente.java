@@ -5,7 +5,7 @@ import com.toedter.calendar.JDateChooser;
 
 public class EditarPaciente extends JDialog {
     private int idPaciente;
-    private int idUsuario; // Necesitamos ambos IDs para actualizar las dos tablas
+    private int idUsuario;
     
     // Datos de Usuario
     private JTextField txtCedula, txtNombre, txtApellido, txtEmail, txtTelefono;
