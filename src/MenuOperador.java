@@ -231,12 +231,6 @@ public class MenuOperador extends JFrame {
             }
             
             int idCita = (int) modelo.getValueAt(fila, 0);
-            String estado = (String) modelo.getValueAt(fila, 5);
-            
-            if ("Atendida".equals(estado) || "Cancelada".equals(estado)) {
-                JOptionPane.showMessageDialog(this, "No se pueden editar citas pasadas o canceladas.");
-                return;
-            }
 
             new EditarCita(idCita).setVisible(true);
             

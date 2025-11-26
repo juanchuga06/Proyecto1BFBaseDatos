@@ -6,6 +6,7 @@ import com.toedter.calendar.JDateChooser;
 
 public class EditarCita extends JDialog {
     private int idCita;
+    private boolean esSoloLectura = false;
     
     private JComboBox<ItemPaciente> cmbPacientes;
     private JComboBox<ItemDoctor> cmbDoctores;
@@ -14,11 +15,12 @@ public class EditarCita extends JDialog {
     private JComboBox<String> cmbEstado;
     private JTextArea txtMotivo;
     private JTextArea txtObservaciones;
+    private JButton btnGuardar;
 
     public EditarCita(int idCita) {
         this.idCita = idCita;
 
-        setTitle("Editar Cita #" + idCita + " (Control Total)");
+        setTitle("Editar Cita #" + idCita);
         setSize(500, 700);
         setModal(true);
         setLocationRelativeTo(null);
@@ -89,7 +91,7 @@ public class EditarCita extends JDialog {
         scrollObs.setBounds(30, 340, 420, 60);
         add(scrollObs);
 
-        JButton btnGuardar = new JButton("GUARDAR CAMBIOS TOTALES 💾");
+        btnGuardar = new JButton("GUARDAR CAMBIOS 💾");
         btnGuardar.setBounds(100, 600, 280, 40);
         btnGuardar.setBackground(new Color(255, 140, 0));
         btnGuardar.setForeground(Color.WHITE);
@@ -145,7 +147,6 @@ public class EditarCita extends JDialog {
     private void cargarDatosActuales() {
         try {
             Connection con = Conexion.getConexion();
-            // CAMBIO: Traemos TODOS los campos
             String sql = "SELECT ID_PACIENTE, ID_DOCTOR, FECHA_CITA, HORA_INICIO, MOTIVO_CONSULTA, OBSERVACIONES, ESTADO_CITA " +
                          "FROM CITA WHERE ID_CITA = ?";
             PreparedStatement pst = con.prepareStatement(sql);
@@ -179,17 +180,46 @@ public class EditarCita extends JDialog {
                 txtMotivo.setText(rs.getString("MOTIVO_CONSULTA"));
                 txtObservaciones.setText(rs.getString("OBSERVACIONES"));
                 
+                // 4. Estado y BLOQUEO
                 String estadoLetra = rs.getString("ESTADO_CITA");
-                if ("P".equals(estadoLetra)) cmbEstado.setSelectedItem("Programada");
-                else if ("A".equals(estadoLetra)) cmbEstado.setSelectedItem("Atendida");
-                else if ("C".equals(estadoLetra)) cmbEstado.setSelectedItem("Cancelada");
+                if ("P".equals(estadoLetra)) {
+                    cmbEstado.setSelectedItem("Programada");
+                } else {
+                    if ("A".equals(estadoLetra)) cmbEstado.setSelectedItem("Atendida");
+                    else if ("C".equals(estadoLetra)) cmbEstado.setSelectedItem("Cancelada");
+                    
+                    bloquearEdicion();
+                }
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al cargar datos: " + e.getMessage());
         }
     }
 
+    private void bloquearEdicion() {
+        this.esSoloLectura = true;
+        this.setTitle(getTitle() + " (Solo Lectura)");
+        
+        cmbPacientes.setEnabled(false);
+        cmbDoctores.setEnabled(false);
+        dateChooser.setEnabled(false);
+        cmbHora.setEnabled(false);
+        cmbEstado.setEnabled(false);
+        txtMotivo.setEditable(false);
+        txtObservaciones.setEditable(false);
+        
+        btnGuardar.setText("Verificar Edición 🔒");
+        btnGuardar.setBackground(Color.GRAY);
+    }
+
     private void intentarGuardar() {
+        if (esSoloLectura) {
+            JOptionPane.showMessageDialog(this,
+                "Solo se pueden editar citas que no han sido atendidas o canceladas.",
+                "Acción no permitida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         Date fechaSeleccionada = dateChooser.getDate();
         if (fechaSeleccionada == null) {
             JOptionPane.showMessageDialog(this, "Selecciona una fecha.");
@@ -229,8 +259,8 @@ public class EditarCita extends JDialog {
             pst.setDate(3, fechaSql);
             pst.setTime(4, horaSql);
             pst.setString(5, txtMotivo.getText());
-            pst.setString(6, txtObservaciones.getText()); // Guardamos observaciones
-            pst.setString(7, estadoLetra); // Guardamos estado P, A o C
+            pst.setString(6, txtObservaciones.getText());
+            pst.setString(7, estadoLetra);
             pst.setInt(8, this.idCita);
 
             int filas = pst.executeUpdate();
@@ -246,7 +276,6 @@ public class EditarCita extends JDialog {
     private boolean elDoctorEstaOcupado(int idDoctor, java.sql.Date fecha, java.sql.Time hora) {
         try {
             Connection con = Conexion.getConexion();
-            // Ignoramos ESTA cita (ID != this.idCita)
             String sql = "SELECT COUNT(*) FROM CITA WHERE ID_DOCTOR = ? AND FECHA_CITA = ? AND HORA_INICIO = ? " +
                          "AND ESTADO_CITA IN ('P', 'A') AND ID_CITA != ?";
             PreparedStatement pst = con.prepareStatement(sql);
