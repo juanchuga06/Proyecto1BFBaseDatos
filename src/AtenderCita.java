@@ -6,25 +6,26 @@ import java.util.ArrayList;
 
 public class AtenderCita extends JDialog {
     private int idCita;
-    private JTextArea txtObservaciones;
-    private JTextArea txtTratamiento;
+    private int idTratamientoExistente = -1;
+    
+    private JTextArea txtObservaciones; 
+    private JTextArea txtTratamiento;   
     private JSpinner spinDiasTratamiento;
-
-    // Componentes de la Receta
+    
     private JComboBox<ItemMedicamento> cmbMedicinas;
     private JTextField txtDosis;
     private JTextField txtFrecuencia;
     private JSpinner spinDiasMedicina;
     private JTable tablaReceta;
     private DefaultTableModel modeloReceta;
-
+    
     private ArrayList<Object[]> listaMedicinasGuardar = new ArrayList<>();
 
     public AtenderCita(int idCita) {
         this.idCita = idCita;
-
+        
         setTitle("Atención Médica - Cita #" + idCita);
-        setModal(true);
+        setModal(true); 
         setSize(900, 600);
         setLocationRelativeTo(null);
         setLayout(null);
@@ -74,7 +75,7 @@ public class AtenderCita extends JDialog {
 
         agregarCampo(470, 90, "Dosis:", txtDosis = new JTextField());
         agregarCampo(660, 90, "Frecuencia:", txtFrecuencia = new JTextField());
-
+        
         JLabel lblDurMed = new JLabel("Por cuántos días:");
         lblDurMed.setBounds(470, 130, 120, 25);
         add(lblDurMed);
@@ -92,7 +93,7 @@ public class AtenderCita extends JDialog {
         modeloReceta = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return false; 
             }
         };
         tablaReceta = new JTable(modeloReceta);
@@ -100,7 +101,7 @@ public class AtenderCita extends JDialog {
         scrollTabla.setBounds(470, 170, 380, 250);
         add(scrollTabla);
 
-        JButton btnFinalizar = new JButton("FINALIZAR CONSULTA");
+        JButton btnFinalizar = new JButton("GUARDAR CONSULTA");
         btnFinalizar.setBounds(300, 480, 300, 50);
         btnFinalizar.setBackground(new Color(0, 100, 0));
         btnFinalizar.setForeground(Color.WHITE);
@@ -110,8 +111,10 @@ public class AtenderCita extends JDialog {
         btnFinalizar.setBorderPainted(false);
         btnFinalizar.setOpaque(true);
         add(btnFinalizar);
-
+        
         btnFinalizar.addActionListener(e -> guardarTodo());
+        
+        cargarDatosExistentes();
     }
 
     private void agregarCampo(int x, int y, String titulo, Component comp) {
@@ -129,12 +132,63 @@ public class AtenderCita extends JDialog {
             ResultSet rs = st.executeQuery("SELECT * FROM MEDICAMENTO ORDER BY NOMBRE_MEDICAMENTO");
             while (rs.next()) {
                 cmbMedicinas.addItem(new ItemMedicamento(
-                        rs.getInt("ID_MEDICAMENTO"),
-                        rs.getString("NOMBRE_MEDICAMENTO"),
-                        rs.getString("PRESENTACION")
+                    rs.getInt("ID_MEDICAMENTO"), 
+                    rs.getString("NOMBRE_MEDICAMENTO"), 
+                    rs.getString("PRESENTACION")
                 ));
             }
         } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private void cargarDatosExistentes() {
+        try {
+            Connection con = Conexion.getConexion();
+            
+            String sqlCita = "SELECT OBSERVACIONES FROM CITA WHERE ID_CITA = ?";
+            PreparedStatement pstCita = con.prepareStatement(sqlCita);
+            pstCita.setInt(1, this.idCita);
+            ResultSet rsCita = pstCita.executeQuery();
+            if(rsCita.next()) {
+                txtObservaciones.setText(rsCita.getString("OBSERVACIONES"));
+            }
+
+            String sqlTrat = "SELECT ID_TRATAMIENTO, DESCRIPCION, DURACION_DIAS FROM TRATAMIENTO WHERE ID_CITA = ?";
+            PreparedStatement pstTrat = con.prepareStatement(sqlTrat);
+            pstTrat.setInt(1, this.idCita);
+            ResultSet rsTrat = pstTrat.executeQuery();
+
+            if (rsTrat.next()) {
+                this.idTratamientoExistente = rsTrat.getInt("ID_TRATAMIENTO");
+                txtTratamiento.setText(rsTrat.getString("DESCRIPCION"));
+                spinDiasTratamiento.setValue(rsTrat.getInt("DURACION_DIAS"));
+                
+                this.setTitle(this.getTitle() + " (MODO EDICIÓN)");
+
+                String sqlMeds = "SELECT TM.ID_MEDICAMENTO, TM.DOSIS, TM.FRECUENCIA, TM.DURACION, " +
+                                 "M.NOMBRE_MEDICAMENTO, M.PRESENTACION " +
+                                 "FROM TRATAMIENTO_MEDICAMENTO TM " +
+                                 "JOIN MEDICAMENTO M ON TM.ID_MEDICAMENTO = M.ID_MEDICAMENTO " +
+                                 "WHERE TM.ID_TRATAMIENTO = ?";
+                
+                PreparedStatement pstMeds = con.prepareStatement(sqlMeds);
+                pstMeds.setInt(1, this.idTratamientoExistente);
+                ResultSet rsMeds = pstMeds.executeQuery();
+
+                while(rsMeds.next()) {
+                    int idMed = rsMeds.getInt("ID_MEDICAMENTO");
+                    String dosis = rsMeds.getString("DOSIS");
+                    String frec = rsMeds.getString("FRECUENCIA");
+                    int dur = rsMeds.getInt("DURACION");
+                    String nombreVisual = rsMeds.getString("NOMBRE_MEDICAMENTO") + " - " + rsMeds.getString("PRESENTACION");
+
+                    modeloReceta.addRow(new Object[]{nombreVisual, dosis, frec, dur});
+                    
+                    listaMedicinasGuardar.add(new Object[]{idMed, dosis, frec, dur});
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private void agregarMedicinaALaTabla() {
@@ -146,6 +200,16 @@ public class AtenderCita extends JDialog {
         if (dosis.isEmpty() || frec.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Escribe dosis y frecuencia.");
             return;
+        }
+
+        for (Object[] fila : listaMedicinasGuardar) {
+            int idExistente = (int) fila[0];
+            if (idExistente == med.getId()) {
+                JOptionPane.showMessageDialog(this,
+                    "No es posible duplicar el mismo medicamento en la receta.",
+                    "Medicamento Duplicado", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
         }
 
         modeloReceta.addRow(new Object[]{med.toString(), dosis, frec, dias});
@@ -173,24 +237,40 @@ public class AtenderCita extends JDialog {
                 pstCita.setInt(2, idCita);
                 pstCita.executeUpdate();
 
-                String sqlTrat = "INSERT INTO TRATAMIENTO (ID_CITA, DESCRIPCION, FECHA_INICIO_TRATAMIENTO, DURACION_DIAS) VALUES (?, ?, CURDATE(), ?)";
-                PreparedStatement pstTrat = con.prepareStatement(sqlTrat, Statement.RETURN_GENERATED_KEYS);
-                pstTrat.setInt(1, idCita);
-                pstTrat.setString(2, txtTratamiento.getText());
-                pstTrat.setInt(3, (int) spinDiasTratamiento.getValue());
-                pstTrat.executeUpdate();
+                int idTratamientoFinal;
 
-                ResultSet rsKeys = pstTrat.getGeneratedKeys();
-                int idTratamiento = 0;
-                if (rsKeys.next()) {
-                    idTratamiento = rsKeys.getInt(1);
+                if (this.idTratamientoExistente == -1) {
+                    String sqlTrat = "INSERT INTO TRATAMIENTO (ID_CITA, DESCRIPCION, FECHA_INICIO_TRATAMIENTO, DURACION_DIAS) VALUES (?, ?, CURDATE(), ?)";
+                    PreparedStatement pstTrat = con.prepareStatement(sqlTrat, Statement.RETURN_GENERATED_KEYS);
+                    pstTrat.setInt(1, idCita);
+                    pstTrat.setString(2, txtTratamiento.getText());
+                    pstTrat.setInt(3, (int) spinDiasTratamiento.getValue());
+                    pstTrat.executeUpdate();
+
+                    ResultSet rsKeys = pstTrat.getGeneratedKeys();
+                    rsKeys.next();
+                    idTratamientoFinal = rsKeys.getInt(1);
+
+                } else {
+                    idTratamientoFinal = this.idTratamientoExistente;
+                    String sqlUpdateTrat = "UPDATE TRATAMIENTO SET DESCRIPCION = ?, DURACION_DIAS = ?, FECHA_INICIO_TRATAMIENTO = CURDATE() WHERE ID_TRATAMIENTO = ?";
+                    PreparedStatement pstUpd = con.prepareStatement(sqlUpdateTrat);
+                    pstUpd.setString(1, txtTratamiento.getText());
+                    pstUpd.setInt(2, (int) spinDiasTratamiento.getValue());
+                    pstUpd.setInt(3, idTratamientoFinal);
+                    pstUpd.executeUpdate();
+
+                    String sqlDelMeds = "DELETE FROM TRATAMIENTO_MEDICAMENTO WHERE ID_TRATAMIENTO = ?";
+                    PreparedStatement pstDel = con.prepareStatement(sqlDelMeds);
+                    pstDel.setInt(1, idTratamientoFinal);
+                    pstDel.executeUpdate();
                 }
 
                 String sqlMed = "INSERT INTO TRATAMIENTO_MEDICAMENTO (ID_TRATAMIENTO, ID_MEDICAMENTO, DOSIS, FRECUENCIA, DURACION) VALUES (?, ?, ?, ?, ?)";
                 PreparedStatement pstMed = con.prepareStatement(sqlMed);
 
                 for (Object[] fila : listaMedicinasGuardar) {
-                    pstMed.setInt(1, idTratamiento);
+                    pstMed.setInt(1, idTratamientoFinal);
                     pstMed.setInt(2, (int) fila[0]);
                     pstMed.setString(3, (String) fila[1]);
                     pstMed.setString(4, (String) fila[2]);
@@ -199,13 +279,13 @@ public class AtenderCita extends JDialog {
                 }
 
                 con.commit();
-                JOptionPane.showMessageDialog(this, "¡Consulta finalizada exitosamente!");
+                JOptionPane.showMessageDialog(this, "¡Consulta guardada exitosamente!");
                 dispose();
 
             } catch (SQLException e) {
                 con.rollback();
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error grave: " + e.getMessage());
+                JOptionPane.showMessageDialog(this, "Error grave al guardar: " + e.getMessage());
             } finally {
                 con.setAutoCommit(true);
             }

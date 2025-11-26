@@ -81,8 +81,8 @@ public class MenuDoctor extends JFrame {
             int idCita = (int) modelo.getValueAt(fila, 0);
             String estado = (String) modelo.getValueAt(fila, 5);
 
-            if (!"Programada".equals(estado)) {
-                JOptionPane.showMessageDialog(this, "Solo se pueden atender citas Programadas (Pendientes).");
+            if ("Cancelada".equals(estado)) {
+                JOptionPane.showMessageDialog(this, "No se puede acceder a una cita cancelada.");
                 return;
             }
 

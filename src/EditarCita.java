@@ -6,7 +6,6 @@ import com.toedter.calendar.JDateChooser;
 
 public class EditarCita extends JDialog {
     private int idCita;
-    private boolean esSoloLectura = false;
     
     private JComboBox<ItemPaciente> cmbPacientes;
     private JComboBox<ItemDoctor> cmbDoctores;
@@ -15,12 +14,11 @@ public class EditarCita extends JDialog {
     private JComboBox<String> cmbEstado;
     private JTextArea txtMotivo;
     private JTextArea txtObservaciones;
-    private JButton btnGuardar;
 
     public EditarCita(int idCita) {
         this.idCita = idCita;
 
-        setTitle("Editar Cita #" + idCita);
+        setTitle("Editar Cita #" + idCita + " (Modo Administrador)");
         setSize(500, 700);
         setModal(true);
         setLocationRelativeTo(null);
@@ -33,7 +31,7 @@ public class EditarCita extends JDialog {
         cmbPacientes = new JComboBox<>();
         cmbPacientes.setBounds(30, 45, 420, 30);
         add(cmbPacientes);
-        cargarPacientes();
+        cargarPacientes(); 
 
         JLabel lblDoc = new JLabel("Doctor:");
         lblDoc.setBounds(30, 85, 200, 20);
@@ -81,7 +79,7 @@ public class EditarCita extends JDialog {
         scrollMotivo.setBounds(30, 245, 420, 60);
         add(scrollMotivo);
         
-        JLabel lblObs = new JLabel("Observaciones (Médico/Operador):");
+        JLabel lblObs = new JLabel("Observaciones:");
         lblObs.setBounds(30, 315, 250, 20);
         add(lblObs);
 
@@ -91,7 +89,7 @@ public class EditarCita extends JDialog {
         scrollObs.setBounds(30, 340, 420, 60);
         add(scrollObs);
 
-        btnGuardar = new JButton("GUARDAR CAMBIOS 💾");
+        JButton btnGuardar = new JButton("GUARDAR CAMBIOS 💾");
         btnGuardar.setBounds(100, 600, 280, 40);
         btnGuardar.setBackground(new Color(255, 140, 0));
         btnGuardar.setForeground(Color.WHITE);
@@ -106,120 +104,54 @@ public class EditarCita extends JDialog {
     }
 
     private void cargarHorarios() {
-        int horaInicio = 8;
-        int horaFin = 16;
-        for (int h = horaInicio; h <= horaFin; h++) {
-            for (int m = 0; m < 60; m += 20) {
-                cmbHora.addItem(String.format("%02d:%02d", h, m));
-            }
-        }
+        for (int h = 8; h <= 16; h++) for (int m = 0; m < 60; m += 20) cmbHora.addItem(String.format("%02d:%02d", h, m));
     }
     
     private void cargarPacientes() {
-        try {
-            Connection con = Conexion.getConexion();
-            String sql = "SELECT P.ID_PACIENTE, U.NOMBRE, U.APELLIDO " +
-                         "FROM PACIENTE P JOIN USUARIO U ON P.ID_USUARIO = U.ID_USUARIO " +
-                         "WHERE U.ESTADO_USUARIO = 1"; // Solo activos
-            PreparedStatement pst = con.prepareStatement(sql);
-            ResultSet rs = pst.executeQuery();
-            while (rs.next()) {
-                cmbPacientes.addItem(new ItemPaciente(
-                    rs.getInt("ID_PACIENTE"), 
-                    rs.getString("NOMBRE") + " " + rs.getString("APELLIDO")
-                ));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
+        try { Connection con = Conexion.getConexion();
+        ResultSet rs = con.createStatement().executeQuery("SELECT P.ID_PACIENTE, U.NOMBRE, U.APELLIDO FROM PACIENTE P JOIN USUARIO U ON P.ID_USUARIO = U.ID_USUARIO WHERE U.ESTADO_USUARIO = 1");
+        while(rs.next()) cmbPacientes.addItem(new ItemPaciente(rs.getInt(1), rs.getString(2)+" "+rs.getString(3))); 
+        } catch(Exception e){} 
     }
-
+    
     private void cargarDoctores() {
-        try {
-            Connection con = Conexion.getConexion();
-            String sql = "SELECT D.ID_DOCTOR, U.NOMBRE, U.APELLIDO FROM DOCTOR D JOIN USUARIO U ON D.ID_USUARIO = U.ID_USUARIO";
-            PreparedStatement pst = con.prepareStatement(sql);
-            ResultSet rs = pst.executeQuery();
-            while (rs.next()) {
-                cmbDoctores.addItem(new ItemDoctor(rs.getInt("ID_DOCTOR"), rs.getString("NOMBRE") + " " + rs.getString("APELLIDO")));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
+        try { Connection con = Conexion.getConexion();
+        ResultSet rs = con.createStatement().executeQuery("SELECT D.ID_DOCTOR, U.NOMBRE, U.APELLIDO FROM DOCTOR D JOIN USUARIO U ON D.ID_USUARIO = U.ID_USUARIO");
+        while(rs.next()) cmbDoctores.addItem(new ItemDoctor(rs.getInt(1), rs.getString(2)+" "+rs.getString(3))); 
+        } catch(Exception e){}
     }
 
     private void cargarDatosActuales() {
         try {
             Connection con = Conexion.getConexion();
-            String sql = "SELECT ID_PACIENTE, ID_DOCTOR, FECHA_CITA, HORA_INICIO, MOTIVO_CONSULTA, OBSERVACIONES, ESTADO_CITA " +
-                         "FROM CITA WHERE ID_CITA = ?";
+            String sql = "SELECT ID_PACIENTE, ID_DOCTOR, FECHA_CITA, HORA_INICIO, MOTIVO_CONSULTA, OBSERVACIONES, ESTADO_CITA FROM CITA WHERE ID_CITA = ?";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, this.idCita);
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                // 1. Seleccionar Paciente
                 int idPac = rs.getInt("ID_PACIENTE");
-                for (int i = 0; i < cmbPacientes.getItemCount(); i++) {
-                    if (cmbPacientes.getItemAt(i).getId() == idPac) {
-                        cmbPacientes.setSelectedIndex(i);
-                        break;
-                    }
-                }
+                for (int i=0; i<cmbPacientes.getItemCount(); i++) if(cmbPacientes.getItemAt(i).getId() == idPac) cmbPacientes.setSelectedIndex(i);
                 
-                // 2. Seleccionar Doctor
                 int idDoc = rs.getInt("ID_DOCTOR");
-                for (int i = 0; i < cmbDoctores.getItemCount(); i++) {
-                    if (cmbDoctores.getItemAt(i).getId() == idDoc) {
-                        cmbDoctores.setSelectedIndex(i);
-                        break;
-                    }
-                }
+                for (int i=0; i<cmbDoctores.getItemCount(); i++) if(cmbDoctores.getItemAt(i).getId() == idDoc) cmbDoctores.setSelectedIndex(i);
 
-                // 3. Fecha y Hora
                 dateChooser.setDate(rs.getDate("FECHA_CITA"));
-                String hora = rs.getTime("HORA_INICIO").toString().substring(0, 5);
-                cmbHora.setSelectedItem(hora);
-                
+                cmbHora.setSelectedItem(rs.getTime("HORA_INICIO").toString().substring(0, 5));
                 txtMotivo.setText(rs.getString("MOTIVO_CONSULTA"));
                 txtObservaciones.setText(rs.getString("OBSERVACIONES"));
                 
-                // 4. Estado y BLOQUEO
                 String estadoLetra = rs.getString("ESTADO_CITA");
-                if ("P".equals(estadoLetra)) {
-                    cmbEstado.setSelectedItem("Programada");
-                } else {
-                    if ("A".equals(estadoLetra)) cmbEstado.setSelectedItem("Atendida");
-                    else if ("C".equals(estadoLetra)) cmbEstado.setSelectedItem("Cancelada");
-                    
-                    bloquearEdicion();
-                }
+                if ("P".equals(estadoLetra)) cmbEstado.setSelectedItem("Programada");
+                else if ("A".equals(estadoLetra)) cmbEstado.setSelectedItem("Atendida");
+                else if ("C".equals(estadoLetra)) cmbEstado.setSelectedItem("Cancelada");
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al cargar datos: " + e.getMessage());
         }
     }
 
-    private void bloquearEdicion() {
-        this.esSoloLectura = true;
-        this.setTitle(getTitle() + " (Solo Lectura)");
-        
-        cmbPacientes.setEnabled(false);
-        cmbDoctores.setEnabled(false);
-        dateChooser.setEnabled(false);
-        cmbHora.setEnabled(false);
-        cmbEstado.setEnabled(false);
-        txtMotivo.setEditable(false);
-        txtObservaciones.setEditable(false);
-        
-        btnGuardar.setText("Verificar Edición 🔒");
-        btnGuardar.setBackground(Color.GRAY);
-    }
-
     private void intentarGuardar() {
-        if (esSoloLectura) {
-            JOptionPane.showMessageDialog(this,
-                "Solo se pueden editar citas que no han sido atendidas o canceladas.",
-                "Acción no permitida", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         Date fechaSeleccionada = dateChooser.getDate();
         if (fechaSeleccionada == null) {
             JOptionPane.showMessageDialog(this, "Selecciona una fecha.");
@@ -239,20 +171,17 @@ public class EditarCita extends JDialog {
         java.sql.Date fechaSql = new java.sql.Date(fechaSeleccionada.getTime());
 
         if (!"C".equals(estadoLetra) && elDoctorEstaOcupado(doctor.getId(), fechaSql, horaSql)) {
-            JOptionPane.showMessageDialog(this, "El doctor ya tiene otra cita activa a esa hora.", "Conflicto Doctor", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "El doctor ya tiene cita a esa hora (Conflicto Doctor).");
             return;
         }
-
         if (!"C".equals(estadoLetra) && elPacienteEstaOcupado(paciente.getId(), fechaSql, horaSql)) {
-            JOptionPane.showMessageDialog(this, "El paciente ya tiene otra cita activa a esa misma hora.", "Conflicto Paciente", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "El paciente ya tiene cita a esa hora (Conflicto Paciente).");
             return;
         }
 
         try {
             Connection con = Conexion.getConexion();
-            String sql = "UPDATE CITA SET ID_PACIENTE=?, ID_DOCTOR=?, FECHA_CITA=?, HORA_INICIO=?, " +
-                         "MOTIVO_CONSULTA=?, OBSERVACIONES=?, ESTADO_CITA=? WHERE ID_CITA=?";
-            
+            String sql = "UPDATE CITA SET ID_PACIENTE=?, ID_DOCTOR=?, FECHA_CITA=?, HORA_INICIO=?, MOTIVO_CONSULTA=?, OBSERVACIONES=?, ESTADO_CITA=? WHERE ID_CITA=?";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, paciente.getId());
             pst.setInt(2, doctor.getId());
@@ -262,10 +191,9 @@ public class EditarCita extends JDialog {
             pst.setString(6, txtObservaciones.getText());
             pst.setString(7, estadoLetra);
             pst.setInt(8, this.idCita);
-
-            int filas = pst.executeUpdate();
-            if (filas > 0) {
-                JOptionPane.showMessageDialog(this, "¡Cita editada correctamente!");
+            
+            if (pst.executeUpdate() > 0) {
+                JOptionPane.showMessageDialog(this, "¡Cambios guardados exitosamente!");
                 dispose();
             }
         } catch (SQLException e) {
@@ -273,35 +201,19 @@ public class EditarCita extends JDialog {
         }
     }
 
-    private boolean elDoctorEstaOcupado(int idDoctor, java.sql.Date fecha, java.sql.Time hora) {
-        try {
-            Connection con = Conexion.getConexion();
-            String sql = "SELECT COUNT(*) FROM CITA WHERE ID_DOCTOR = ? AND FECHA_CITA = ? AND HORA_INICIO = ? " +
-                         "AND ESTADO_CITA IN ('P', 'A') AND ID_CITA != ?";
-            PreparedStatement pst = con.prepareStatement(sql);
-            pst.setInt(1, idDoctor);
-            pst.setDate(2, fecha);
-            pst.setTime(3, hora);
-            pst.setInt(4, this.idCita);
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
-        } catch (SQLException e) { e.printStackTrace(); }
-        return false;
+    private boolean elDoctorEstaOcupado(int id, java.sql.Date f, java.sql.Time h) {
+        try { Connection con = Conexion.getConexion();
+              PreparedStatement pst = con.prepareStatement("SELECT COUNT(*) FROM CITA WHERE ID_DOCTOR=? AND FECHA_CITA=? AND HORA_INICIO=? AND ESTADO_CITA IN ('P','A') AND ID_CITA != ?");
+              pst.setInt(1, id); pst.setDate(2, f); pst.setTime(3, h); pst.setInt(4, this.idCita);
+              ResultSet rs = pst.executeQuery(); if(rs.next()) return rs.getInt(1)>0;
+        } catch(Exception e){} return false;
     }
-
-    private boolean elPacienteEstaOcupado(int idPac, java.sql.Date fecha, java.sql.Time hora) {
-        try {
-            Connection con = Conexion.getConexion();
-            String sql = "SELECT COUNT(*) FROM CITA WHERE ID_PACIENTE = ? AND FECHA_CITA = ? AND HORA_INICIO = ? " +
-                         "AND ESTADO_CITA IN ('P', 'A') AND ID_CITA != ?";
-            PreparedStatement pst = con.prepareStatement(sql);
-            pst.setInt(1, idPac);
-            pst.setDate(2, fecha);
-            pst.setTime(3, hora);
-            pst.setInt(4, this.idCita);
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
-        } catch (SQLException e) { e.printStackTrace(); }
-        return false;
+    
+    private boolean elPacienteEstaOcupado(int id, java.sql.Date f, java.sql.Time h) {
+        try { Connection con = Conexion.getConexion();
+              PreparedStatement pst = con.prepareStatement("SELECT COUNT(*) FROM CITA WHERE ID_PACIENTE=? AND FECHA_CITA=? AND HORA_INICIO=? AND ESTADO_CITA IN ('P','A') AND ID_CITA != ?");
+              pst.setInt(1, id); pst.setDate(2, f); pst.setTime(3, h); pst.setInt(4, this.idCita);
+              ResultSet rs = pst.executeQuery(); if(rs.next()) return rs.getInt(1)>0;
+        } catch(Exception e){} return false;
     }
 }

@@ -129,6 +129,13 @@ public class AgendarCita extends JDialog {
             return;
         }
 
+        if (elPacienteEstaOcupado(this.idPaciente, fechaSql, horaSql)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ya tienes una cita agendada a esa misma hora con otro médico.",
+                    "Conflicto de Horario", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         guardarCita(doctor.getId(), fechaSql, horaSql);
     }
 
@@ -141,6 +148,28 @@ public class AgendarCita extends JDialog {
 
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, idDoctor);
+            pst.setDate(2, fecha);
+            pst.setTime(3, hora);
+
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                ocupado = (rs.getInt(1) > 0);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ocupado;
+    }
+
+    private boolean elPacienteEstaOcupado(int idPaciente, java.sql.Date fecha, java.sql.Time hora) {
+        boolean ocupado = false;
+        try {
+            Connection con = Conexion.getConexion();
+            String sql = "SELECT COUNT(*) FROM CITA WHERE ID_PACIENTE = ? " +
+                    "AND FECHA_CITA = ? AND HORA_INICIO = ? AND ESTADO_CITA IN ('P', 'A')";
+
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, idPaciente);
             pst.setDate(2, fecha);
             pst.setTime(3, hora);
 
